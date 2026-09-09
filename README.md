@@ -10,14 +10,14 @@ cd 02_DOC_BASED_APP_PP_Class_Chhim_PoJim
 
 Install all dependencies from pyproject.toml and poetry.lock:
 
-`poetry install`
+```poetry install```
 
 
 Get the virtual-environment activation command:
 
-`poetry env activate`
+```poetry env activate```
 
 Copy and execute the command displayed by Poetry to activate virtual environment. For example:
 
-`source /path/to/poetry/virtualenv/bin/.../activate`
+```source /path/to/poetry/virtualenv/bin/.../activate```
 
