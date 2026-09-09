@@ -3,8 +3,8 @@ EMBED_MODEL = 'nomic-embed-text:latest'
 GENERATE_MODEL = 'llama3.2:latest'
 
 # ---------- Storage config ----------
-DATA_DIR = "documents"
-CHROMA_DB_DIR = "chroma_db"
+DATA_DIR = str("documents")
+CHROMA_DB_DIR = str("chroma_db")
 COLLECTION_NAME = "documents"
 
 # ----------Chuniking config ----------
