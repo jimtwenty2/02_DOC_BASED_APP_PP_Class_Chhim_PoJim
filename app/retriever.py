@@ -1,7 +1,7 @@
 from typing import List, TypedDict
 from app.config import TOP_K
 from app.embedding import embed_query
-from app.ingest import get_collection
+from app.chromadb_config import get_collection
 
 class RetrievedChunk(TypedDict):
     text: str
