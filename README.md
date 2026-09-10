@@ -21,8 +21,12 @@ Copy and execute the command displayed by Poetry to activate virtual environment
 
 ```source /path/to/poetry/virtualenv/bin/.../activate```
 
-## 2. Prepare Documents
+## 2. Prepare Documents and Model to use
+### Model choice:
+- For embedding model, `EMBED_MODEL = 'nomic-embed-text:latest'`, The reason is : it is specifically designed for text embeddings. It converts document chunks and user questions into vectors that can be compared by similarity, and can run on both GPU and CPU.
+- For generation model, `GENERATE_MODEL = 'llama3.2:latest'`, Reason because it is a relatively small and efficient local LLM that can generate answers from the retrieved context. and can run on both GPU and CPU.
 
+### Documents
 Put your .txt documents inside a directory.
 
 For example: inside `documents/`
@@ -217,3 +221,18 @@ source                                                           distance   rank
 In conclusion: for off-topic questions, the retriever still returns the top-k nearest chunks by default, since vector search always finds some closest match regardless of relevance. However, the distance values for these off-topic chunks are noticeably higher than for chunks that genuinely answer a question found in the documents — in our tests, ~1.22–1.29 for an irrelevant query versus ~0.29–0.42 for a relevant one.
 
 To handle this, we added a distance threshold (MAX_DISTANCE = 0.8) that filters out any chunk whose distance exceeds this value. Since off-topic queries produce distances well above 0.8, no chunks pass the filter, and retrieve() correctly returns an empty list — allowing the system to report "no relevant information found" instead of returning irrelevant context.
+
+# 7. My Reflection
+## What worked well
+It's about overall RAG pipeline. The application can load documents, split into smaller chunks, generate embeddings, store them in Vector Store such ChromaDB, and retrieve relevant chunks when a user asks a question. and use a Ollama model allowed me to run the
+embedding and generation steps in local.
+
+## What was harder than expected
+One thing that was harder than I expected was getting the retrieval results to
+match the user's question accurately. but chunk size and content in that chunks can affect what info is retrived. In this case I use Fix-Sized splitting strategy, so if useful information is split into different chunks the retriever may not return the best context which cause LLM to generate not good answer. 
+
+## Future improvement
+For future improvement, I think we can use an Advanced RAG technique such as
+re-ranking. right now system retrieves he top_k chunks direct from
+VextorStore (chromadb) based on vector similarity. A re-ranking step can evaluate the
+retrieved chunks again and place the most relevant chunks first before sending to LLM. This may improve retrieval accuracy and help the LLM generate more relevant and grounded answers.
