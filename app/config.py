@@ -16,6 +16,7 @@ FILE_TO_LOAD = 5
 
 # ---------- Retrieval config ----------
 TOP_K = 4
+MAX_DISTANCE = 0.8 # Threshold
 
 # ------ Generation config ------
 

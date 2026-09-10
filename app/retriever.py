@@ -1,5 +1,5 @@
 from typing import List, TypedDict
-from app.config import TOP_K
+from app.config import (TOP_K,MAX_DISTANCE)
 from app.embedding import embed_query
 from app.chromadb_config import get_collection
 
@@ -32,13 +32,25 @@ def retrieve(query: str, top_k: int = TOP_K):
     distances = results["distances"][0]
 
     for text, meta, distance in zip(documents,metadatas,distances):
-        chunks.append(
-            {
-                "text": text,
-                "source": meta.get("source","unknown"),
-                "chunk_index": meta.get("chunk_index",-1),
-                "distance": distance
-            } #type:ignore
-        )
+        if distance <= MAX_DISTANCE:
+            chunks.append(
+                {
+                    "text": text,
+                    "source": meta.get("source","unknown"),
+                    "chunk_index": meta.get("chunk_index",-1),
+                    "distance": distance
+                } #type:ignore
+            )
 
     return chunks
+
+    return chunks
+
+
+def print_chunks(chunks: List[RetrievedChunk]) -> None:
+    print(f"\nTOP_K Chunk : [{len(chunks)}]")
+    print("=" * 80)
+    print(f"{'source':<60} {'distance':>12} {'rank':>6}")
+    for i, chunk in enumerate(chunks, start=1):
+        print(f"{chunk['source']:<60} {chunk['distance']:>12.4f} {i:>6}")
+    print()
