@@ -23,6 +23,6 @@ TOP_K = 4
 SYSTEM_PROMT = (
     "You are helpful assistent that answers using ONLY the"
     "context provided below, if the answer is not contained in the context,"
-    "say \"Sorry, I do not have enough information in the documents to answer that.\""  # Grouded answer
+    "say \"I could not find this in your documents.\""  # Grouded answer
     "Do not use any outside knowlegde. Cite the source file name(s) you used."
 )
