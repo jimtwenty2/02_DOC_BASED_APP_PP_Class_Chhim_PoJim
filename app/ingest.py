@@ -88,34 +88,40 @@ def chunk_text(
 
     return chunks
 
-# ---------- Indexing ----------
+# ---------- ChromaDB ----------
 _CHROMA_SETTINGS = Settings(anonymized_telemetry=False)
 
+
 def get_collection():
+    """Get the existing ChromaDB collection."""
+    client = chromadb.PersistentClient(
+        path=CHROMA_DB_DIR,
+        settings=_CHROMA_SETTINGS
+    )
 
-    # Create a persistent ChromaDB client
-    client = chromadb.PersistentClient(path=CHROMA_DB_DIR, settings=_CHROMA_SETTINGS)
+    return client.get_or_create_collection(
+        name=COLLECTION_NAME
+    )
 
+
+# ---------- Build and store vector index ----------
+def build_index(count_file: int ,data_dir: str = DATA_DIR) -> dict:
+
+    # Load documents and extract their text
+    documents = load_document(count_file, data_dir)
+
+    if not documents:
+        raise FileNotFoundError(f"No file .txt was found in directory {data_dir}/")
+
+    client = chromadb.PersistentClient(path=CHROMA_DB_DIR, settings = _CHROMA_SETTINGS)
     try:
-        # Delete the old collection to rebuild the index from scratch
         client.delete_collection(COLLECTION_NAME)
     except Exception:
         pass
+    
+    collection = client.get_or_create_collection(name=COLLECTION_NAME)
 
-    # Create a new collection for storing document embeddings
-    return client.create_collection(name=COLLECTION_NAME)
 
-# -------- Store embedded vector --------
-def build_index(count_file: int ,data_dir: str = DATA_DIR) -> dict:
-
-    # Create a fresh ChromaDB collection
-    collection = get_collection()
-
-    # Load documents and extract their text
-    documents = load_document(count_file,data_dir)
-
-    if not documents:
-        raise FileNotFoundError(f"No file .txt was found")
 
     ids, texts, metadatas = [], [], []
     files_chunks = {}
