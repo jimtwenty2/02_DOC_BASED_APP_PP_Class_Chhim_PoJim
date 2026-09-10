@@ -62,6 +62,9 @@ So:
 
 You can enter any positive number. If the requested number is greater than the number of available files, the program loads all available files instead of producing an error.
 
+#### Example: 
+![Reference of Build the Vector Store](./images/Screenshot%20From%202026-09-10%2021-48-50.png)
+
 ## 4. Verify the Vector Store
 
 Before running the chatbot, verify that the vector search is working correctly.
@@ -77,6 +80,9 @@ The script will:
 - Search ChromaDB
 - Return the top 3 most similar chunks
 
+#### Example: 
+![Reference of Build the Vector Store](./images/Screenshot%20From%202026-09-10%2021-52-29.png)
+
 Check whether the returned chunks are relevant to your question.
 If the results make sense, the vector store and retrieval process are working correctly.
 
@@ -84,3 +90,24 @@ If the results make sense, the vector store and retrieval process are working co
 After the vector store has been built and verified, run the chatbot from the project root:
 
 ```poetry run python -m app.main```
+
+# 6. Testing
+
+Test to see how LLM response to our question with/without data in documents that we've ingested! 
+
+## 6.1 Test with 3 questions that should have answers inside your documents
+
+```Qestion 1: How to setup email for mobile devices?```
+![Q&A1](./images/Screenshot%20From%202026-09-10%2021-46-38.png)
+
+```Qestion 2: Bakup file```
+![Q&A2](./images/Screenshot%20From%202026-09-10%2021-54-51.png)
+
+```Qestion 3: Help me fix problem with Microsoft Office```
+![Q&A3](./images/Screenshot%20From%202026-09-10%2021-55-58.png)
+
+## 6.2 Test with 2 questions dont have any answer in documents
+```Qestion 4: Tell me about cambodia?```
+
+```Qestion 5: Error Code ER-123```
+![Q&A4and5](./images/Screenshot%20From%202026-09-10%2022-07-21.png)
