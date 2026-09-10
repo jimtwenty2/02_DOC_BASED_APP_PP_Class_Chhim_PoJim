@@ -7,36 +7,54 @@ from app.config import (
     CHROMA_DB_DIR,
     DATA_DIR,
     CHUNK_SIZE, CHUNK_OVERLAP,
-    COLLECTION_NAME
+    COLLECTION_NAME,
+    FILE_TO_LOAD
 )
 
 from app.embedding import embed_texts
 
 def _read_text(path: str) -> str:
+    # Read the entire text file using UTF-8 encoding
     with open(path, 'r', encoding='UTF-8') as file:
         return file.read()
 
-# Load specific amount of document in /{DATA_DIR} and extract text from each document
-def load_document(count_file: int, data_dir: str = DATA_DIR) -> List[Tuple[str, str]]:
+# Load up to the requested number of .txt documents
+def load_document(
+    count_file: int = FILE_TO_LOAD,
+    data_dir: str = DATA_DIR
+) -> List[Tuple[str, str]]:
+
     documents = []
-    list_docs = os.listdir(data_dir)
-    for filename in sorted(list_docs):
+    count = 0
 
-        # count_file use to count how many file we want to load and extract text
-        count_file += 1
+    # Loop through all files in the data directory in sorted order
+    for filename in sorted(os.listdir(data_dir)):
 
-        if count_file <= len(list_docs):
-            path = os.path.join(data_dir, filename)
-            if not os.path.isfile(path):
-                continue
-            ext = filename.lower().rsplit(".",1)[-1]
-            if ext == "txt":
-                text = _read_text(path)
-            else:
-                continue
+       # Stop when the requested file count is reached
+        if count >= count_file:
+            break
 
-        if text.strip():
-            documents.append((filename,text))
+        path = os.path.join(data_dir, filename)
+
+         # Skip directories and non-file items
+        if not os.path.isfile(path):
+            continue
+
+        # Extract file's extension
+        ext = filename.lower().rsplit(".", 1)[-1]
+
+        # Only process .txt files
+        if ext != "txt":
+            continue
+
+        text = _read_text(path)
+
+        # Skip empty files
+        if not text.strip():
+            continue
+
+        documents.append((filename, text))
+        count += 1
 
     return documents
 
@@ -46,19 +64,26 @@ def chunk_text(
     chunk_size: int = CHUNK_SIZE,
     chunk_overlap: int = CHUNK_OVERLAP
 ) -> List[str]:
-    """ FIxed size strategy with overlapping"""
+    
+    """Split text into fixed-size overlapping chunks."""
+
     text = text.strip()
+
     if not text:
         return []
+
     chunks = []
-    chunk_count = 0;
     start = 0
+
     while start < len(text):
-        chunk_count += 1
         end = start + chunk_size
         chunks.append(text[start:end])
+
+        # Stop when the end of the document is reached
         if end >= len(text):
             break
+
+        # Move back by the overlap amount for the next chunk
         start = end - chunk_overlap
 
     return chunks
@@ -68,37 +93,51 @@ _CHROMA_SETTINGS = Settings(anonymized_telemetry=False)
 
 def get_collection():
 
-    # Store the Chroma database persistently on disk
+    # Create a persistent ChromaDB client
     client = chromadb.PersistentClient(path=CHROMA_DB_DIR, settings=_CHROMA_SETTINGS)
+
     try:
-        # Try to delete if exist and rebuild new one
+        # Delete the old collection to rebuild the index from scratch
         client.delete_collection(COLLECTION_NAME)
     except Exception:
         pass
 
-    # Return the collection or create it if it does not exist
-    return client.get_or_create_collection(name=COLLECTION_NAME)
+    # Create a new collection for storing document embeddings
+    return client.create_collection(name=COLLECTION_NAME)
 
-def build_index(count_file: int ,data_dir: str = DATA_DIR) -> int:
+# -------- Store embedded vector --------
+def build_index(count_file: int ,data_dir: str = DATA_DIR) -> dict:
 
+    # Create a fresh ChromaDB collection
     collection = get_collection()
 
-    docments = load_document(count_file,data_dir)
+    # Load documents and extract their text
+    documents = load_document(count_file,data_dir)
 
-    if not docments:
-        raise FileNotFoundError(f"No file .txt or .md was found")
+    if not documents:
+        raise FileNotFoundError(f"No file .txt was found")
 
     ids, texts, metadatas = [], [], []
+    files_chunks = {}
 
-    for filename, full_text, in docments:
-        for i, chunk in enumerate(chunk_text(full_text)):
+    for filename, full_text in documents:
+
+        chunked_text = chunk_text(full_text)
+
+        files_chunks[filename] = len(chunked_text)
+
+        for i, chunk in enumerate(chunked_text):
             ids.append(f"{filename}::{i}")
             texts.append(chunk)
             metadatas.append({
                 "source": filename,
                 "chunk_index":i
             })
+
+    # Convert text chunks into vector embeddings
     embeddings = embed_texts(texts)
+
+    # Store chunks, embeddings, and metadata in ChromaDB
     collection.add(
             ids=ids,
             documents=texts,
@@ -106,4 +145,24 @@ def build_index(count_file: int ,data_dir: str = DATA_DIR) -> int:
             metadatas=metadatas
     )
 
-    return len(texts)
+    return {
+        "files_chunks": files_chunks,
+        "chunks": len(texts),
+        "status": "Indexing completed"
+    }
+
+if __name__ == '__main__':
+
+    # Load documents, create embeddings, and store them in ChromaDB
+    built_index = build_index(102)
+
+    print("\n------------------------------ Result ------------------------------")
+    print(f"Status: {built_index['status']}")
+    print(f"Total Chunks Indexed: {built_index['chunks']} chunks")
+
+    files_chunks = built_index["files_chunks"]
+    print("------------------------------ Files -------------------------------")
+    print(f"Total Files: {len(files_chunks)}")
+    for filename, chunk_count in files_chunks.items():
+        print(f"   {filename} ==> {chunk_count} chunks")
+    print()

@@ -8,8 +8,11 @@ CHROMA_DB_DIR = str("chroma_db")
 COLLECTION_NAME = "documents"
 
 # ----------Chuniking config ----------
-CHUNK_SIZE = 800
+CHUNK_SIZE = 600
 CHUNK_OVERLAP = 120
+
+# Default file number to load
+FILE_TO_LOAD = 5
 
 # ---------- Retrieval config ----------
 TOP_K = 4
