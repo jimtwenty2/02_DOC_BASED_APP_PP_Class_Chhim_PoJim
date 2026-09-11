@@ -53,7 +53,7 @@ def load_document(
     return documents
 
 # ---------- Chunking ----------
-def chunk_text(
+def chunk_text_fixed_size(
     text: str,
     chunk_size: int = CHUNK_SIZE,
     chunk_overlap: int = CHUNK_OVERLAP
@@ -79,5 +79,54 @@ def chunk_text(
 
         # Move back by the overlap amount for the next chunk
         start = end - chunk_overlap
+
+    return chunks
+
+def _split_by_separator(text: str, separator: str) -> List[str]:
+    if separator == "":
+        return list(text)
+    return text.split(separator)
+
+def chunk_recursive(
+    text: str,
+    chunk_size: int = CHUNK_SIZE,
+    chunk_overlap: int = CHUNK_OVERLAP,
+    separators: List[str] = None
+) -> List[str]:
+    """Recursively split text using a priority list of separators."""
+    if separators is None:
+        separators = ["\n\n", "\n", ". ", " ", ""]  # paragraph -> line -> sentence -> word -> char
+
+    if len(text) <= chunk_size:
+        return [text.strip()] if text.strip() else []
+
+    separator = separators[0]
+    remaining_separators = separators[1:]
+    pieces = _split_by_separator(text, separator)
+
+    if len(pieces) == 1 and remaining_separators:
+        return chunk_recursive(text, chunk_size, chunk_overlap, remaining_separators)
+
+    chunks = []
+    current = ""
+
+    for piece in pieces:
+        piece = piece if separator == "" else piece + separator
+        
+        if len(current) + len(piece) > chunk_size and current:
+            chunks.append(current.strip())
+            # carry over overlap from the end of the previous chunk
+            current = current[-chunk_overlap:] if chunk_overlap > 0 else ""
+        current += piece
+
+        # If a single piece is itself too large, recurse into it
+        if len(piece) > chunk_size:
+            if current.strip():
+                chunks.append(current.strip())
+                current = ""
+            chunks.extend(chunk_recursive(piece, chunk_size, chunk_overlap, remaining_separators))
+
+    if current.strip():
+        chunks.append(current.strip())
 
     return chunks

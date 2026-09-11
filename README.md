@@ -236,3 +236,62 @@ For future improvement, I think we can use an Advanced RAG technique such as
 re-ranking. right now system retrieves he top_k chunks direct from
 VextorStore (chromadb) based on vector similarity. A re-ranking step can evaluate the
 retrieved chunks again and place the most relevant chunks first before sending to LLM. This may improve retrieval accuracy and help the LLM generate more relevant and grounded answers.
+
+# 7. Compare 2 chunk strategy - Fixed Size Vs Recursive
+- **Fixed size:** Splits text into equal-length chunks based on a fixed character count, with a small overlap between chunks to preserve context across boundaries. Simple and fast, but can cut chunks mid-sentence or mid-step.
+- **Recursive:** Splits text by trying the largest natural boundary first (paragraphs), falling back to smaller boundaries (lines, sentences, words) only when a piece is still too large. Produces chunks that better respect the document's structure.
+
+Example: loaded 2 sam files from /documents, See the different:
+- First, about number of total chunks
+- Second, about content for each chunk (cannot print to see here. sinze there're alot of texts)
+```
+Enter number of files to load: 2
+Enter document folder [default: documents]: documents
+
+================================================================================
+|| File: 001_Setting_Up_a_Mobile_Device_for_Company_Email.txt
+================================================================================
+
+Fixed size:
+           Total: [6]
+           ==================================================
+           Chunk 1: 001_Setting_Up_a_Mobile_Device_for_Company_Email.txt
+           Chunk 2: 001_Setting_Up_a_Mobile_Device_for_Company_Email.txt
+           Chunk 3: 001_Setting_Up_a_Mobile_Device_for_Company_Email.txt
+           Chunk 4: 001_Setting_Up_a_Mobile_Device_for_Company_Email.txt
+           Chunk 5: 001_Setting_Up_a_Mobile_Device_for_Company_Email.txt
+           Chunk 6: 001_Setting_Up_a_Mobile_Device_for_Company_Email.txt
+
+Recursive:
+           Total: [7]
+           ==================================================
+           Chunk 1: 001_Setting_Up_a_Mobile_Device_for_Company_Email.txt
+           Chunk 2: 001_Setting_Up_a_Mobile_Device_for_Company_Email.txt
+           Chunk 3: 001_Setting_Up_a_Mobile_Device_for_Company_Email.txt
+           Chunk 4: 001_Setting_Up_a_Mobile_Device_for_Company_Email.txt
+           Chunk 5: 001_Setting_Up_a_Mobile_Device_for_Company_Email.txt
+           Chunk 6: 001_Setting_Up_a_Mobile_Device_for_Company_Email.txt
+           Chunk 7: 001_Setting_Up_a_Mobile_Device_for_Company_Email.txt
+
+
+================================================================================
+|| File: 002_Resetting_a_Forgotten_PIN.txt
+================================================================================
+
+Fixed size:
+           Total: [4]
+           ==================================================
+           Chunk 1: 002_Resetting_a_Forgotten_PIN.txt
+           Chunk 2: 002_Resetting_a_Forgotten_PIN.txt
+           Chunk 3: 002_Resetting_a_Forgotten_PIN.txt
+           Chunk 4: 002_Resetting_a_Forgotten_PIN.txt
+
+Recursive:
+           Total: [5]
+           ==================================================
+           Chunk 1: 002_Resetting_a_Forgotten_PIN.txt
+           Chunk 2: 002_Resetting_a_Forgotten_PIN.txt
+           Chunk 3: 002_Resetting_a_Forgotten_PIN.txt
+           Chunk 4: 002_Resetting_a_Forgotten_PIN.txt
+           Chunk 5: 002_Resetting_a_Forgotten_PIN.txt
+```

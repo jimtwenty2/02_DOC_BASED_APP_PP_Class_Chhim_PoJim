@@ -1,4 +1,4 @@
-from app.ingest import load_document, chunk_text
+from app.ingest import load_document, chunk_text_fixed_size
 from app.embedding import embed_texts
 from app.chromadb_config import get_collection
 import os
@@ -20,7 +20,7 @@ def build_index(count_file: int ,data_dir: str = DATA_DIR) -> dict:
 
     for filename, full_text in documents:
 
-        chunked_text = chunk_text(full_text)
+        chunked_text = chunk_text_fixed_size(full_text)
 
         files_chunks[filename] = len(chunked_text)
 
