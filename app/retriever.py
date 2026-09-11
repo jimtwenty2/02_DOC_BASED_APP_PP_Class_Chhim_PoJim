@@ -44,9 +44,6 @@ def retrieve(query: str, top_k: int = TOP_K):
 
     return chunks
 
-    return chunks
-
-
 def print_chunks(chunks: List[RetrievedChunk]) -> None:
     print(f"\nTOP_K Chunk : [{len(chunks)}]")
     print("=" * 80)

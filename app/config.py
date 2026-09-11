@@ -1,5 +1,6 @@
 # ---------- Models config ----------
-
+EMBED_MODEL = 'nomic-embed-text:latest'
+GENERATE_MODEL = 'llama3.2:latest'
 
 # ---------- Storage config ----------
 DATA_DIR = str("documents")
